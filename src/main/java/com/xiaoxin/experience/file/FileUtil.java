@@ -3,7 +3,6 @@ package com.xiaoxin.experience.file;
 import org.springframework.util.Assert;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,8 +47,9 @@ public class FileUtil {
         if(file.exists())
         {
             try(FileWriter fileWriter = new FileWriter(file)){
+
                 for (String s : list) {
-                    String message = completeWord("map.put", s);
+                    String message = completeWord("GB28181_CENTER_CODE_MAP.put", s);
                     fileWriter.write(message);
                 }
             } catch (IOException e) {
@@ -60,14 +60,14 @@ public class FileUtil {
 
     private static String completeWord(String pre, String word)
     {
-        String reduce = word.replaceAll(",", "").replace(" ","").trim();
+        String reduce = word.replaceAll(",", "").replace("\t","").trim();
         String code = reduce.substring(0, 6);
         String range = reduce.substring(6);
-        return pre + "(\"" + code + "\", \"" + range + "\");\r\n";
+        return pre + "(\"" + range + "\", \"" + code + "\");\r\n";
     }
 
     public static void main(String[] args) {
-        List<String> list = readTxt("D:\\project\\experience\\main\\experience\\省市区行政编码.txt");
-        writeTxt("D:\\project\\experience\\main\\experience\\rangeMap.txt",list);
+        List<String> list = readTxt("省市区行政编码.txt");
+        writeTxt("rangeMap.txt",list);
     }
 }
