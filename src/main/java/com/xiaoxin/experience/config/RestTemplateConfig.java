@@ -29,13 +29,8 @@ import java.security.NoSuchAlgorithmException;
  * @author xiaoxin
  * @version 2021/2/23
  *
- * 配置前提: springboot项目
+ * 配置前提: springboot web项目
  * 所需maven依赖为:
- *
- *          <dependency>
- *             <groupId>org.springframework.boot</groupId>
- *             <artifactId>spring-boot-starter-web</artifactId>
- *         </dependency>
  *
  *         <dependency>
  *             <groupId>org.apache.httpcomponents</groupId>
