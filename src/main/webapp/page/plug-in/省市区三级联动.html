@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>省市区三级联动</title>
+</head>
+<body>
+<div id="app">
+    <section class="container">
+        <el-row>
+            <el-select v-model="provinceValue" placeholder="请选择" @change="selectProvince">
+                <el-option
+                        v-for="(item,index) of provincearr"
+                        :key="index"
+                        :label="item.name"
+                        :value="item.id"
+                ></el-option>
+            </el-select>
+            <el-select v-model="cityValue" placeholder="请选择" @change="selectCity">
+                <el-option v-for="(item,index) of cityarr" :key="index" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+            <el-select placeholder="请选择" v-model="RegionValue" @change="choseRegion">
+                <el-option
+                        v-for="(item,index) of regionarr"
+                        :key="index"
+                        :label="item.name"
+                        :value="item.id"
+                ></el-option>
+            </el-select>
+        </el-row>
+        <input type="hidden" id="test" name="test" v-model="region">
+    </section>
+</div>
+<button onclick="test()">点击测试</button>
+</body>
+<script src="../../js/vue/vue.js"></script>
+<script src="../../js/vue/element-ui-index.js"></script>
+<script type="module">
+    import {province} from "../../js/map/map.js";
+    let vue = new Vue({
+        el:'#app',
+        data:{
+            arr: [1, 3, 4],
+            province: [],
+            cityarr: [],
+            regionarr: [],
+            provinceValue: '',
+            cityValue: '',
+            RegionValue: '',
+            region:''
+        },
+        created () {
+            this.provincearr = province
+        },
+        methods: {
+            selectProvince (id) {
+                this.cityarr = [];
+                this.regionarr = [];
+                this.cityValue = '';
+                this.RegionValue = '';
+                for (let item of this.provincearr) {
+                    if (id == item.id) {
+                        this.cityarr = item.children
+                    }
+                }
+                this.choseRegion();
+            },
+            selectCity (id) {
+                this.regionarr = [];
+                this.RegionValue = '';
+                for (let item of this.cityarr) {
+                    if (id == item.id) {
+                        this.regionarr = item.children
+                    }
+                }
+                this.choseRegion();
+            },
+            choseRegion () {
+                if(this.RegionValue)
+                {
+                    this.region = this.RegionValue;
+                    return;
+                }
+                if(this.cityValue)
+                {
+                    this.region = this.cityValue;
+                    return;
+                }
+                this.region = this.provinceValue;
+            }
+        }
+    });
+</script>
+<script>
+    function test() {
+        alert(document.getElementById("test").value)
+    }
+</script>
+</html>

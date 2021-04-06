@@ -1,0 +1,82 @@
+<html>
+<header>
+    <meta charset="UTF-8">
+    <style>
+        @import url("../../css/element-ui/theme-chalk-index.css");
+        html,body,#app,.el-container{
+            /*设置内部填充为0，几个布局元素之间没有间距*/
+            padding: 0;
+            /*外部间距也是如此设置*/
+            margin: 0;
+            /*统一设置高度为100%*/
+            height: 100%;
+        }
+        .el-header {
+            background-color: #B3C0D1;
+            color: #333;
+            line-height: 60px;
+        }
+
+        .el-aside {
+            color: #333;
+        }
+        .text {
+            font-size: 14px;
+        }
+
+        .item {
+            padding: 18px 0;
+        }
+        .el-select .el-input {
+            width: 130px;
+        }
+        .input-with-select .el-input-group__prepend {
+            background-color: #fff;
+        }
+    </style>
+</header>
+<body style="margin: 0 0">
+<script src="../../js/vue/vue.js"></script>
+<script src="../../js/vue/element-ui-index.js"></script>
+<script src="../../js/video-player/EasyWasmPlayer.js"></script>
+<div id="app">
+    <el-container style="border: 1px solid #eee">
+        <el-header style="text-align: center; font-size: 20px">
+            视频流播放器(支持hls和flv)
+        </el-header>
+        <el-container>
+            <el-main>
+                <el-input placeholder="请输入视频播放地址" clearable  v-model="streamUrl" class="input-with-select">
+                    <template slot="prepend">flv/hls视频流地址</template>
+                    <el-button slot="append" icon="el-icon-video-play" @click="play()">播放</el-button>
+                </el-input>
+                <el-card class="box-card">
+                    <div style="width:80%;height:70%;background-color:black;margin: 0 auto">
+                        <div id="Player"></div>
+                    </div>
+                </el-card>
+            </el-main>
+            <el-footer style="text-align: center;"> Copyright © 2014 - 2019 Allcam. All Rights Reserved. 南京奥看信息科技 版权所有 </el-footer>
+        </el-container>
+    </el-container>
+</div>
+</body>
+<script>
+    let vue = new Vue({
+        el:'#app',
+        data:{
+            streamUrl:'',
+        },
+        methods: {
+            play() {
+                let Player = new WasmPlayer(null,'Player',vue.callbackFun,{cbUserPtr:this, decodeType:"auto", openAudio:1, BigPlay:false, Height:true});
+                Player.play(vue.streamUrl,1);
+            },
+            callbackFun(e) {
+                console.log(e);
+            },
+        }
+    })
+</script>
+
+</html>
