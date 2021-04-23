@@ -6,6 +6,9 @@ import com.xiaoxin.experience.service.demo.DemoService;
 import com.xiaoxin.experience.service.demo.model.Demo;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author xiaoxin
  */
@@ -16,5 +19,10 @@ public class DemoServiceImpl extends ServiceImpl<DemoMapper,Demo> implements Dem
     public void insertDemo(Demo demo)
     {
         save(demo);
+    }
+
+    @Override
+    public List<Demo> getDemoList(Map<String, Object> map) {
+        return baseMapper.selectByMap(map);
     }
 }
