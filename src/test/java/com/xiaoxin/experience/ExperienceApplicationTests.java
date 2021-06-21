@@ -1,23 +1,25 @@
 package com.xiaoxin.experience;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoxin.experience.config.HttpsService;
-import com.xiaoxin.experience.service.demo.DemoService;
-import com.xiaoxin.experience.service.demo.model.Demo;
+import com.xiaoxin.experience.tree.Device;
+import com.xiaoxin.experience.tree.Group;
+import com.xiaoxin.experience.tree.GroupTree;
+import com.xiaoxin.experience.tree.JsTree;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * create by xiaoxin on 2021/3/19
@@ -31,9 +33,6 @@ public class ExperienceApplicationTests {
 
     @Autowired
     private HttpsService httpsService;
-
-    @Autowired
-    private DemoService demoService;
 
     @Test
     public void restTemplateTest()
@@ -55,22 +54,107 @@ public class ExperienceApplicationTests {
     }
 
     @Test
-    public void mybatisPlusTest()
-    {
-        Demo demo = new Demo();
-        demo.setId("de");
-        demo.setName("demo");
-        Timestamp timestamp = new Timestamp(new Date().getTime());
-        demo.setCreateTime(timestamp);
-        demoService.insertDemo(demo);
+    public void jsTreeDemo() throws JsonProcessingException {
+        List<Group> groupList = new ArrayList<>();
+        Group mainGroup = new Group(0, -1, "0,","主");
+        Group group1 = new Group(2,0,"0,","其他1");
+        Group group2 = new Group(3, 1, "0,1,", "其他2");
+        Group group3 = new Group(4, 1, "0,1,", "其他3");
+        Group group4 = new Group(5, 1, "0,1,", "其他4");
+        Group group5 = new Group(6, 2, "0,2,","其他5");
+        Group group6 = new Group(7, 6, "0,2,6","其他6");
+
+
+
+        groupList.add(group1);
+        groupList.add(group2);
+        groupList.add(group3);
+        groupList.add(group4);
+        groupList.add(group5);
+        groupList.add(group6);
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Group groupRoot = new Group();
+        groupRoot.setId(Integer.MAX_VALUE);
+
+        GroupTree groupTree = new GroupTree(groupList,mainGroup,true);
+        List<Device> devices = new ArrayList<>();
+        Device device = new Device();
+        device.setId("1");
+        device.setOrganizationId(6);
+        device.setName("abc");
+        devices.add(device);
+        groupTree.decorateLeaves(devices);
+        JsTree jsTree = groupTree.getTreeRoot().buildJsTree(branch -> JsTree.asBranch(String.valueOf(branch.getId()), branch.getName(), "1", branch),
+                leaf -> JsTree.asLeaf(leaf.getId(), leaf.getName(), "2", leaf));
+        List<JsTree> children = jsTree.getChildren();
+        String s = objectMapper.writeValueAsString(children);
+        System.out.println(s);
+
+        List<Group> groups = new ArrayList<>();
+        toGroupList(children,mainGroup.getId(),mainGroup.getParents(),groups);
+        String s1 = objectMapper.writeValueAsString(groups);
+        System.out.println(s1);
+        JsTree specJsTree = getSpecJsTree(6, children);
+        String s2 = objectMapper.writeValueAsString(specJsTree);
+        System.out.println(s2);
     }
 
-    @Test
-    public void mybatisMapSelect()
+    private static JsTree getSpecJsTree(Integer organizationId,List<JsTree> allJsTree)
     {
-        Map<String,Object> map = new HashMap<>();
-        map.put("name","demo");
-        List<Demo> demoList = demoService.getDemoList(map);
-        Assert.notNull(demoList,"domeList is null");
+        if (CollectionUtils.isEmpty(allJsTree))
+        {
+            return null;
+        }
+        for (JsTree jsTree : allJsTree) {
+            Group payload = (Group) jsTree.getPayload();
+            if(payload.getId().equals(organizationId))
+            {
+                return jsTree;
+            }else {
+                JsTree specJsTree = getSpecJsTree(organizationId, jsTree.getChildren());
+                if (null == specJsTree)
+                {
+                    continue;
+                }
+                return specJsTree;
+            }
+        }
+        return null;
+    }
+
+    private static void toGroupList(List<JsTree> jsTreeList,Integer parentId,String parents,List<Group> groupList)
+    {
+        if (jsTreeList == null)
+        {
+            return;
+        }
+        for (JsTree jsTree : jsTreeList)
+        {
+            if(jsTree.isLeaf()){
+                continue;
+            }
+            Group payload = (Group)jsTree.getPayload();
+            payload.setParentId(parentId);
+            payload.setParents(parents + payload.getId() + ",");
+            groupList.add(payload);
+            toGroupList(jsTree.getChildren(),payload.getId(),payload.getParents(),groupList);
+        }
+    }
+
+
+
+    public static <T> T convert(Object obj, Class<T> cls)
+    {
+        T t;
+        try {
+            t = cls.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        BeanUtils.copyProperties(obj,t,cls);
+        return t;
     }
 }

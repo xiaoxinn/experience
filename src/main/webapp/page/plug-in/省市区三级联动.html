@@ -43,7 +43,7 @@
                 ></el-option>
             </el-select>
         </el-row>
-        <input type="hidden" id="test" name="test" v-model="region">
+        <input type="text" id="regionCode" name="regionCode" v-model="region" @change="restoreCode">
     </section>
 </div>
 <button onclick="test()">点击测试</button>
@@ -65,7 +65,8 @@
             region:''
         },
         created () {
-            this.provincearr = province
+            this.provincearr = province;
+            this.restoreCode();
         },
         methods: {
             selectProvince (id) {
@@ -90,6 +91,7 @@
                 }
                 this.choseRegion();
             },
+
             choseRegion () {
                 if(this.RegionValue)
                 {
@@ -102,13 +104,49 @@
                     return;
                 }
                 this.region = this.provinceValue;
-            }
-        }
+            },
+            restoreCode () {
+                this.region = document.getElementById('regionCode').value;
+                let province = this.region.substring(0,2);
+                let city = this.region.substring(0,4);
+                for (let item of this.provincearr) {
+                    if (province === item.id.substring(0,2)) {
+                        this.provinceValue = item.id;
+                        if(this.region === item.id)
+                        {
+                            return;
+                        }
+                        this.cityarr = item.children;
+                        for (let c of item.children) {
+                            if( city === c.id.substring(0,4))
+                            {
+                                this.cityValue = c.id;
+                                this.regionarr = c.children;
+                                if(this.region === c.id)
+                                {
+                                    return;
+                                }
+                                for (let r of c.children)
+                                {
+                                    if( this.region === r.id)
+                                    {
+                                        this.RegionValue = r.id;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            },
+        },
     });
 </script>
 <script>
     function test() {
-        alert(document.getElementById("test").value)
+        alert(document.getElementById("regionCode").value)
     }
 </script>
 </html>
