@@ -143,18 +143,4 @@ public class ExperienceApplicationTests {
             toGroupList(jsTree.getChildren(),payload.getId(),payload.getParents(),groupList);
         }
     }
-
-
-
-    public static <T> T convert(Object obj, Class<T> cls)
-    {
-        T t;
-        try {
-            t = cls.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        BeanUtils.copyProperties(obj,t,cls);
-        return t;
-    }
 }
