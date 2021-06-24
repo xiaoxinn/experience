@@ -46,9 +46,28 @@ public class ExperienceApplicationTests {
     }
 
     @Test
+    public void restTemplateTestHttp()
+    {
+        String url  = "http://114.116.223.94:10010/api/system/version";
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity  = new HttpEntity<>("{}",header);
+        ResponseEntity<String> exchange = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
+        System.out.println(exchange.getBody());
+    }
+
+    @Test
     public void okhttpClient() throws IOException
     {
         String url  = "https://114.116.223.94:10013/api/system/version";
+        String s = httpsService.postJson(url, "{}");
+        System.out.println(s);
+    }
+
+    @Test
+    public void okhttpClientHttp() throws IOException
+    {
+        String url  = "http://114.116.223.94:10010/api/system/version";
         String s = httpsService.postJson(url, "{}");
         System.out.println(s);
     }
