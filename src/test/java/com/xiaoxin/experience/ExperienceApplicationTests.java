@@ -39,7 +39,7 @@ public class ExperienceApplicationTests {
     {
         String url  = "https://114.116.223.94:10013/api/system/version";
         HttpHeaders header = new HttpHeaders();
-        header.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        header.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity  = new HttpEntity<>("{}",header);
         ResponseEntity<String> exchange = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
         System.out.println(exchange.getBody());
