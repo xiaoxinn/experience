@@ -3,85 +3,13 @@ package com.xiaoxin.experience.util;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author xiaoxin
  */
 public class StringUtil
 {
-    private static final char HYPHEN = '-';
-
-    private static final Pattern humpPattern = Pattern.compile("[A-Z]");
-
-    private static final Pattern ipPattern = Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+");
-
-    public static String getIpFromUrl(String url)
-    {
-        if (StringUtils.isBlank(url))
-        {
-            return "";
-        }
-
-        String host = "";
-        Matcher matcher = ipPattern.matcher(url);
-        if (matcher.find())
-        {
-            host = matcher.group();
-        }
-        return host;
-    }
-
-    /**
-     * 中划线格式字符串转换为驼峰格式字符串
-     */
-    public static String hyphenToCamel(String param)
-    {
-        if (StringUtils.isBlank(param))
-        {
-            return "";
-        }
-
-        if (!param.contains(String.valueOf(HYPHEN)))
-        {
-            return param;
-        }
-
-        int len = param.length();
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++)
-        {
-            char c = param.charAt(i);
-            if (c == HYPHEN)
-            {
-                if (++i < len)
-                {
-                    sb.append(Character.toUpperCase(param.charAt(i)));
-                }
-            }
-            else
-            {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 驼峰格式字符串转换为中划线格式字符串
-     */
-    public static String camelToHyphen(String str)
-    {
-        Matcher matcher = humpPattern.matcher(str);
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find())
-        {
-            matcher.appendReplacement(sb, HYPHEN + matcher.group(0).toLowerCase());
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
-    }
+    private StringUtil(){}
 
     /**
      * toLowerCase
@@ -216,79 +144,6 @@ public class StringUtil
         {
             return defValue;
         }
-    }
-
-    public static String encodeEmoji(String orgStr)
-    {
-        if (StringUtils.isBlank(orgStr))
-        {
-            return orgStr;
-        }
-        String temp = orgStr;
-        Pattern pattern = Pattern.compile("[^\u0000-\uffff]", Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(orgStr);
-        while (matcher.find())
-        {
-            StringBuilder sb = new StringBuilder("[em:");
-            String mStr = matcher.group();
-            for (int i = 0; i < mStr.length(); i++)
-            {
-                int emoji = mStr.charAt(i);
-                if (i < mStr.length() - 1)
-                {
-                    sb.append(emoji).append('-');
-                }
-                else
-                {
-                    sb.append(emoji).append(']');
-                }
-            }
-            temp = temp.replaceAll(mStr, sb.toString());
-        }
-        return temp;
-    }
-
-    public static String decodeEmoji(String orgStr)
-    {
-        if (StringUtils.isBlank(orgStr))
-        {
-            return orgStr;
-        }
-        String temp = orgStr;
-        Pattern pattern = Pattern.compile("\\[em:[\\d\\-]+\\]", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(orgStr);
-        while (matcher.find())
-        {
-            StringBuilder sb = new StringBuilder("\\[em:");
-            StringBuilder emojiSb = new StringBuilder();
-            String mStr = matcher.group();
-            String[] emojis = mStr.substring(4, mStr.length() - 1).split("-");
-            for (int i = 0; i < emojis.length; i++)
-            {
-                int emoji = Integer.parseInt(emojis[i]);
-                emojiSb.append((char)emoji);
-                if (i < emojis.length - 1)
-                {
-                    sb.append(emoji).append("\\-");
-                }
-                else
-                {
-                    sb.append(emoji).append("\\]");
-                }
-            }
-            temp = temp.replaceAll(sb.toString(), emojiSb.toString());
-        }
-        return temp;
-    }
-
-    public static String handleHtmlTag(String html)
-    {
-        if (StringUtils.isBlank(html))
-        {
-            return html;
-        }
-
-        return html.replace("<", "&lt;").replace(">", "&gt;");
     }
 
     public static boolean equals(String left, String right)
