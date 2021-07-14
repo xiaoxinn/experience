@@ -17,6 +17,8 @@ import java.util.Map;
  */
 public class JsonUtil {
 
+    private JsonUtil(){}
+
     private static final Logger LOG = LoggerFactory.getLogger(JsonUtil.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
