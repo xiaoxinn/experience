@@ -27,7 +27,6 @@ import java.security.NoSuchAlgorithmException;
 /**
  * <配置restTemplate支持发送https请求>
  * @author xiaoxin
- * @version 2021/2/23
  *
  * 配置前提: springboot web项目
  * 所需maven依赖为:
@@ -46,14 +45,16 @@ public class RestTemplateConfig {
 
         RestTemplate restTemplate = new RestTemplate(httpsFactory);
         restTemplate.setErrorHandler(
-                new ResponseErrorHandler() {
+                new ResponseErrorHandler()
+                {
                     @Override
                     public boolean hasError(ClientHttpResponse clientHttpResponse) {
                         return false;
                     }
 
                     @Override
-                    public void handleError(ClientHttpResponse clientHttpResponse) {
+                    public void handleError(ClientHttpResponse clientHttpResponse)
+                    {
                         // 默认处理非200的返回，会抛异常
                     }
                 });

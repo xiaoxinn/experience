@@ -69,12 +69,18 @@
         },
         methods: {
             play() {
-                let Player = new WasmPlayer(null,'Player',vue.callbackFun,{cbUserPtr:this, decodeType:"auto", openAudio:1, BigPlay:false, Height:true});
+                let Player = new WasmPlayer(null,'Player',vue.callbackFun,{cbUserPtr:this, decodeType:"auto", openAudio:0, BigPlay:false, Height:true});
                 Player.play(vue.streamUrl,1);
+                this.removeHtmlException();
             },
             callbackFun(e) {
                 console.log(e);
             },
+            removeHtmlException()
+            {
+                let htmlVideoElement = document.getElementsByTagName("video").item(0);
+                htmlVideoElement.setAttribute("muted","true");
+            }
         }
     })
 </script>

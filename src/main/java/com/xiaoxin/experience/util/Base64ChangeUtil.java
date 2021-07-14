@@ -38,7 +38,7 @@ public class Base64ChangeUtil {
         return result;
     }
 
-    public static String base64Change1(String pUrl)
+    public static String netFileBase64Change(String pUrl)
     {
         String result = "";
         try

@@ -106,15 +106,15 @@ public class ResizeImgBase64Util {
          */
         public static int imageSize(String image){
             // 1.需要计算文件流大小，首先把头部的data:image/png;base64,（注意有逗号）去掉。
-            String str=image.substring(22);
+            String str = image.substring(22);
 
             //2.找到等号，把等号也去掉
-            int equalIndex= str.indexOf("=");
+            int equalIndex = str.indexOf("=");
             if(str.indexOf("=")>0) {
                 str=str.substring(0, equalIndex);
             }
             //3.原来的字符流大小，单位为字节
-            int strLength=str.length();
-            return strLength-(strLength/8)*2;
+            int strLength = str.length();
+            return strLength - (strLength/8) * 2;
         }
 }
