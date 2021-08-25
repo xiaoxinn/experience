@@ -25,8 +25,44 @@ public class DownloadUtil {
     public static void downLoadFromUrl(String sourceFileUrl, String fileName, String savePath)
     {
         log.debug("start download ...");
-        InputStream inputStream = null;
         FileOutputStream fos = null;
+        try
+        {
+            byte[] getData = downLoadTransToBytes(sourceFileUrl);
+            if (getData.length == 0)
+            {
+                log.error("down load fail ...");
+                return;
+            }
+            fos = new FileOutputStream(new File(saveFilePath(savePath, fileName)));
+            fos.write(getData);
+            log.debug("down load file success !");
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            log.error("down load fail ...");
+        }
+        finally
+        {
+            if (Objects.nonNull(fos))
+            {
+                try
+                {
+                    fos.close();
+                }
+                catch (IOException e)
+                {
+                    log.error("close write stream fail");
+                }
+            }
+        }
+    }
+
+    public static byte[] downLoadTransToBytes(String sourceFileUrl)
+    {
+        log.debug("start download ...");
+        InputStream inputStream = null;
         try
         {
             URL url = new URL(sourceFileUrl);
@@ -38,26 +74,12 @@ public class DownloadUtil {
             //得到输入流
             inputStream = conn.getInputStream();
             //获取自己数组
-            byte[] getData = readInputStream(inputStream);
-
-            //文件保存位置
-            File saveDir = new File(savePath);
-            if (!saveDir.exists()) {
-                boolean mkdirs = saveDir.mkdirs();
-                if (!mkdirs)
-                {
-                    log.error("create dirs fail, download error");
-                    return;
-                }
-            }
-            File file = new File(saveDir + File.separator + fileName);
-            fos = new FileOutputStream(file);
-            fos.write(getData);
-            log.debug("down load file success !");
+            log.debug("downLoad trans success !");
+            return readInputStream(inputStream);
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            log.error("down fail ...");
+            log.error("down fail :",e);
         }
         finally
         {
@@ -72,18 +94,37 @@ public class DownloadUtil {
                     log.error("close input stream fail");
                 }
             }
-            if (Objects.nonNull(fos))
+        }
+        return new byte[0];
+    }
+
+    public static String dirPathComplete(String dirPath)
+    {
+        if (dirPath.endsWith("/"))
+        {
+            return dirPath;
+        }
+        return dirPath + File.separator;
+    }
+
+    public static String saveFilePath(String dirPath, String fileName)
+    {
+        if (dirPath == null || dirPath.trim().length() == 0)
+        {
+            return fileName;
+        }
+        File saveDir = new File(dirPath);
+        if (!saveDir.exists())
+        {
+            boolean mkdirs = saveDir.mkdirs();
+            if (!mkdirs)
             {
-                try
-                {
-                    fos.close();
-                }
-                catch (IOException e)
-                {
-                    log.error("close write stream fail");
-                }
+                log.error("create dir fail,save in current dir");
+                return fileName;
             }
         }
+
+        return dirPathComplete(dirPath) + fileName;
     }
 
     /**
@@ -101,5 +142,29 @@ public class DownloadUtil {
         }
         bos.close();
         return bos.toByteArray();
+    }
+
+    public static byte[] downloadUntilSuccess(String sourceFileUrl)
+    {
+        byte[] bytes = downLoadTransToBytes(sourceFileUrl);
+        while (bytes.length == 0)
+        {
+            bytes = downLoadTransToBytes(sourceFileUrl);
+        }
+        return bytes;
+    }
+
+    public static byte[] downloadLimitRetry(String sourceFileUrl, int retry)
+    {
+        byte[] bytes = downLoadTransToBytes(sourceFileUrl);
+        while (retry  > 0)
+        {
+            retry--;
+            if (bytes.length == 0)
+            {
+                bytes = downLoadTransToBytes(sourceFileUrl);
+            }
+        }
+        return bytes;
     }
 }

@@ -3,13 +3,14 @@ package com.xiaoxin.experience;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoxin.experience.config.HttpsService;
+import com.xiaoxin.experience.m3u8.M3u8Download;
 import com.xiaoxin.experience.tree.Device;
 import com.xiaoxin.experience.tree.Group;
 import com.xiaoxin.experience.tree.GroupTree;
 import com.xiaoxin.experience.tree.JsTree;
+import com.xiaoxin.experience.util.IOUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
@@ -17,8 +18,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -70,6 +80,129 @@ public class ExperienceApplicationTests {
         String url  = "http://114.116.223.94:10010/api/system/version";
         String s = httpsService.postJson(url, "{}");
         System.out.println(s);
+    }
+
+    @Test
+    public void download()
+    {
+        try(BufferedReader bfr = new BufferedReader(new FileReader("F://m3u8JavaDown/download.txt")))
+        {
+            List<String[]> downloadList = new ArrayList<>();
+            bfr.lines().forEach(s -> downloadList.add(s.split(" ")));
+            for (String[] strings : downloadList)
+            {
+                M3u8Download m3U8Download = new M3u8Download(strings[1], "F:\\download", strings[0]);
+                m3U8Download.download();
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void downloadAndDecode() throws Exception{
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        //DownloadUtil.downLoadFromUrl("https://tc.xacyhj.com/20210225/f9ujw8up/2000kb/hls/oWI1uW5E.ts","oWI1uW5E.ts","");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        SecretKeySpec keySpec = new SecretKeySpec("b3c9b9bbee8fd99d".getBytes(StandardCharsets.UTF_8), "AES");
+        byte[] ivByte = new byte[16];
+        //如果m3u8有IV标签，那么IvParameterSpec构造函数就把IV标签后的内容转成字节数组传进去
+        AlgorithmParameterSpec paramSpec = new IvParameterSpec(ivByte);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, paramSpec);
+        byte[] bytes = cipher.doFinal(IOUtil.readAllFileToBytes("oWI1uW5E.ts"));
+        IOUtil.writeFile("a.ts",bytes);
+    }
+
+    @Test
+    public void encrypt() throws Exception
+    {
+        String plaintext = "asdew";
+        Cipher cipher = Cipher.getInstance("AES");
+        SecretKeySpec key = new SecretKeySpec("b3c9b9bbee8fd99d".getBytes(),"AES");
+        cipher.init(Cipher.ENCRYPT_MODE,key);
+        byte[] bytes = cipher.doFinal(plaintext.getBytes());
+        System.out.println(new String(bytes));
+        System.out.println(Base64.getEncoder().encodeToString(bytes));
+    }
+
+    @Test
+    public void decrypt() throws Exception
+    {
+        URL url = new URL("https://tc.xacyhj.com/20210225/f9ujw8up/2000kb/hls/oWI1uW5E.ts");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        //设置超时间为3秒
+        conn.setConnectTimeout(3 * 1000);
+        //防止屏蔽程序抓取而返回403错误
+        conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+        //得到输入流
+        InputStream inputStream = conn.getInputStream();
+        //获取自己数组
+        byte[] getData = readInputStream(inputStream);
+
+        Cipher cipher = Cipher.getInstance("AES");
+        SecretKeySpec key = new SecretKeySpec("b3c9b9bbee8fd99d".getBytes(),"AES");
+        cipher.init(Cipher.DECRYPT_MODE,key, new IvParameterSpec(new byte[16]));
+        byte[] bytes1 = cipher.doFinal(getData);
+        System.out.println(new String(bytes1));
+
+//        Cipher cipher = Cipher.getInstance("AES");
+//        SecretKeySpec key = new SecretKeySpec("b3c9b9bbee8fd99d".getBytes(),"AES");
+//        cipher.init(Cipher.DECRYPT_MODE,key);
+//        byte[] bytes = cipher.doFinal(readToString("f://test.ts"));
+//        String org = com.xiaoxin.experience.util.Test.decrypt(new String(readToString("f://test.ts"), StandardCharsets.UTF_8), "b3c9b9bbee8fd99d");
+        FileWriter fileWriter = new FileWriter("f://oWI1uW5E.ts");
+        fileWriter.write(new String(bytes1));
+        fileWriter.close();
+    }
+
+    private static byte[] readInputStream(InputStream inputStream)
+            throws IOException
+    {
+        byte[] buffer = new byte[1024];
+        int len;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while ((len = inputStream.read(buffer)) != -1)
+        {
+            bos.write(buffer, 0, len);
+        }
+        bos.close();
+        return bos.toByteArray();
+    }
+
+    public byte[] readToString(String fileName) {
+        File file = new File(fileName);
+        Long fileLength = file.length();
+        System.out.println(fileLength);
+        byte[] fileContent = new byte[fileLength.intValue()];
+        try {
+            FileInputStream in = new FileInputStream(file);
+            in.read(fileContent);
+            in.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return fileContent;
+    }
+
+    public static byte[] toByteArray(String hexString) {
+        if (hexString.isEmpty())
+            throw new IllegalArgumentException("this hexString must not be empty");
+
+        hexString = hexString.toLowerCase();
+        final byte[] byteArray = new byte[hexString.length() / 2];
+        int k = 0;
+        for (int i = 0; i < byteArray.length; i++) {//因为是16进制，最多只会占用4位，转换成字节需要两个16进制的字符，高位在先
+            byte high = (byte) (Character.digit(hexString.charAt(k), 16) & 0xff);
+            byte low = (byte) (Character.digit(hexString.charAt(k + 1), 16) & 0xff);
+            byteArray[i] = (byte) (high << 4 | low);
+            k += 2;
+        }
+        return byteArray;
     }
 
     @Test

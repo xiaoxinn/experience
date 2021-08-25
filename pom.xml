@@ -107,6 +107,12 @@
             <version>2.7.1</version>
         </dependency>
 
+        <!--适配jdk1.8> 加解密工具-->
+        <dependency>
+        <groupId>org.bouncycastle</groupId>
+         <artifactId>bcprov-jdk15on</artifactId>
+        <version>1.56</version>
+        </dependency>
     </dependencies>
 
     <build>
