@@ -6,9 +6,12 @@ import com.xiaoxin.experience.util.M3u8Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,15 +39,15 @@ public class M3u8Download {
 
     private String iv;
 
-    private String randomDir;
+    private final String randomDir;
 
-    private Map<String,Integer> taskMap = new HashMap<>();
+    private final Map<String,Integer> taskMap = new HashMap<>();
 
     private String[] tsFileNameArray;
 
-    private List<String> tsDownloadUrlList = new ArrayList<>();
+    private final List<String> tsDownloadUrlList = new ArrayList<>();
 
-    private AtomicInteger downloadCount = new AtomicInteger(0);
+    private final AtomicInteger downloadCount = new AtomicInteger(0);
 
     public String getFileName()
     {
@@ -103,36 +106,7 @@ public class M3u8Download {
         byte[] bytes = DownloadUtil.downloadUntilSuccess(m3u8Url);
         String content = new String(bytes, StandardCharsets.UTF_8);
         String[] lines = content.split("[\r\n]");
-        for (String line : lines) {
-            //如果含有此字段，则获取加密算法以及获取密钥的链接
-            if (line.contains("EXT-X-KEY"))
-            {
-                String[] split1 = line.split(",");
-                for (String s1 : split1)
-                {
-                    if (s1.contains("METHOD"))
-                    {
-                        method = s1.split("=", 2)[1];
-                        continue;
-                    }
-                    if (s1.contains("URI"))
-                    {
-                        String keyDownloadUrl = s1.split("=", 2)[1];
-                        keyDownloadUrl = keyDownloadUrl.replace("\"", "");
-                        key = new String(DownloadUtil.downLoadTransToBytes(keyDownloadUrl),StandardCharsets.UTF_8);
-                        continue;
-                    }
-                    if (s1.contains("IV"))
-                    {
-                        iv = s1.split("=", 2)[1];
-                    }
-                }
-            }
-            if(line.endsWith(".ts"))
-            {
-                tsDownloadUrlList.add(completeTsUrlIfNeed(line));
-            }
-        }
+        fillDownload(lines);
         for (int i = 0; i < tsDownloadUrlList.size(); i++)
         {
             taskMap.put(tsDownloadUrlList.get(i),i);
@@ -150,7 +124,7 @@ public class M3u8Download {
             DownloadThreadPool.execute(() -> {
                 decodeAndSave(tsDownloadUrl, finalSerial);
                 int i = downloadCount.incrementAndGet();
-                log.debug("current download file speed: [" + i + "/" + tsDownloadUrlList.size() + "]");
+                log.debug("current download file speed: [{}/{}]",i,tsDownloadUrlList.size());
                 taskMap.remove(tsDownloadUrl);
             });
         }
@@ -160,7 +134,39 @@ public class M3u8Download {
         deleteDir(DownloadUtil.dirPathComplete(savePath) + randomDir);
         long end = System.currentTimeMillis();
         long seconds = TimeUnit.MILLISECONDS.toSeconds(end - start);
-        log.debug("下载视频《" + fileName + "》完成，共耗时： " + seconds/60 + "分" + seconds%60 + "秒");
+        log.debug("下载视频《{}》完成，共耗时： {}分{}秒", fileName, seconds/60, seconds%60);
+    }
+
+    public void fillDownload(String[] lines)
+    {
+        for (String line : lines) {
+            //如果含有此字段，则获取加密算法以及获取密钥的链接
+            if (line.contains("EXT-X-KEY"))
+            {
+                String[] split1 = line.split(",");
+                for (String s1 : split1)
+                {
+                    if (s1.contains("METHOD"))
+                    {
+                        method = s1.split("=", 2)[1];
+                    }
+                    else if (s1.contains("URI"))
+                    {
+                        String keyDownloadUrl = s1.split("=", 2)[1];
+                        keyDownloadUrl = keyDownloadUrl.replace("\"", "");
+                        key = new String(DownloadUtil.downLoadTransToBytes(keyDownloadUrl),StandardCharsets.UTF_8);
+                    }
+                    else if (s1.contains("IV"))
+                    {
+                        iv = s1.split("=", 2)[1];
+                    }
+                }
+            }
+            if(line.endsWith(".ts"))
+            {
+                tsDownloadUrlList.add(completeTsUrlIfNeed(line));
+            }
+        }
     }
 
     public void waitTaskStop()
@@ -176,6 +182,7 @@ public class M3u8Download {
             catch (InterruptedException e)
             {
                 log.error("sleep fail: ",e);
+                Thread.currentThread().interrupt();
             }
         }while (!taskMap.isEmpty() && last < downloadCount.get());
     }
@@ -193,7 +200,7 @@ public class M3u8Download {
             Integer integer = taskMap.get(s);
             decodeAndSave(s, integer);
             int i = downloadCount.incrementAndGet();
-            log.debug("current download file speed: [" + i + "/" + tsDownloadUrlList.size() + "]");
+            log.debug("current download file speed: [{}/{}]", i ,tsDownloadUrlList.size());
         }
     }
 
@@ -223,24 +230,14 @@ public class M3u8Download {
 
     public void deleteDir(String dir)
     {
-        File dirFile = new File(dir);
-        File[] files = dirFile.listFiles();
-        if (files != null)
+        Path path = FileSystems.getDefault().getPath(dir);
+        try
         {
-            for (File file : files)
-            {
-                deleteFile(file);
-            }
+            Files.delete(path);
         }
-        deleteFile(dirFile);
-    }
-
-    public void deleteFile(File file)
-    {
-        boolean delete = file.delete();
-        if (!delete)
+        catch (IOException e)
         {
-            log.error("delete ts file fail");
+            log.error("file delete fail:", e);
         }
     }
 

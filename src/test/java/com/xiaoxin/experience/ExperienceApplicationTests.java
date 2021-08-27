@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
