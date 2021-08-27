@@ -3,6 +3,7 @@ package com.xiaoxin.experience;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoxin.experience.config.HttpsService;
+import com.xiaoxin.experience.mybatis.service.DemoService;
 import com.xiaoxin.experience.tree.Device;
 import com.xiaoxin.experience.tree.Group;
 import com.xiaoxin.experience.tree.GroupTree;
@@ -33,6 +34,9 @@ public class ExperienceApplicationTests {
 
     @Autowired
     private HttpsService httpsService;
+
+    @Autowired
+    private DemoService demoService;
 
     @Test
     public void restTemplateTest()
@@ -161,5 +165,17 @@ public class ExperienceApplicationTests {
             groupList.add(payload);
             toGroupList(jsTree.getChildren(),payload.getId(),payload.getParents(),groupList);
         }
+    }
+
+    @Test
+    public void mybatis()
+    {
+        System.out.println(demoService.list());
+    }
+
+    @Test
+    public void mybatis1()
+    {
+        demoService.getMap().forEach(System.out::println);
     }
 }

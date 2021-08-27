@@ -18,6 +18,7 @@ public class LoggerExecuteAdvice {
     @Pointcut(value = "@annotation(LogExecute)")
     public void executorPointcut()
     {
+        // do nothing because is pointcut
     }
 
     @Around(value = "executorPointcut()")
