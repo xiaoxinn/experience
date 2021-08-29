@@ -5,6 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Objects;
 
 /**
@@ -166,5 +170,59 @@ public class DownloadUtil {
             }
         }
         return bytes;
+    }
+
+    public void nioDownload(String sourceFileUrl,String savePath)
+    {
+        try(ReadableByteChannel readableByteChannel = Channels.newChannel(new URL(sourceFileUrl).openStream());
+        FileOutputStream fileOutputStream = new FileOutputStream(savePath))
+        {
+            fileOutputStream.getChannel().transferFrom(readableByteChannel,0,Long.MAX_VALUE);
+        }
+        catch (Exception e)
+        {
+            log.error("download file fail: ",e);
+        }
+
+    }
+
+    public void resumeDownload(String sourceFileUrl, String fullFilePath)
+    {
+        try
+        {
+            URL url = new URL(sourceFileUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("HEAD");
+            long contentLength = conn.getContentLengthLong();
+            File file = new File(fullFilePath);
+            long existLength = file.length();
+            if (existLength < contentLength) {
+                conn.setRequestProperty("Range", "bytes=" + existLength + "-" + contentLength);
+            }
+            ReadableByteChannel readableByteChannel = Channels.newChannel(conn.getInputStream());
+            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
+    public static long getContentLength(String sourceFileUrl)
+    {
+        HttpURLConnection conn = null;
+        try
+        {
+            URL url = new URL(sourceFileUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("HEAD");
+            return conn.getContentLengthLong();
+        }
+        catch (Exception e)
+        {
+            log.error("get content length fail: ",e);
+        }
+        return 0;
     }
 }

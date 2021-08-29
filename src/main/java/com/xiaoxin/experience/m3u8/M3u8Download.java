@@ -1,17 +1,15 @@
 package com.xiaoxin.experience.m3u8;
 
 import com.xiaoxin.experience.util.DownloadUtil;
+import com.xiaoxin.experience.util.FileUtil;
 import com.xiaoxin.experience.util.IOUtil;
 import com.xiaoxin.experience.util.M3u8Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -128,10 +126,10 @@ public class M3u8Download {
                 taskMap.remove(tsDownloadUrl);
             });
         }
-        waitTaskStop();
+        waitTaskStop(5,60);
         retryTaskIfNeed();
         mergeTsToMp4();
-        deleteDir(DownloadUtil.dirPathComplete(savePath) + randomDir);
+        FileUtil.deleteDir(DownloadUtil.dirPathComplete(savePath) + randomDir);
         long end = System.currentTimeMillis();
         long seconds = TimeUnit.MILLISECONDS.toSeconds(end - start);
         log.debug("下载视频《{}》完成，共耗时： {}分{}秒", fileName, seconds/60, seconds%60);
@@ -169,22 +167,41 @@ public class M3u8Download {
         }
     }
 
-    public void waitTaskStop()
+    public void waitTaskStop(int sleepTime, int waitTime)
     {
-        int last  = 0;
+        int last;
+        int currentWaitTime = 0;
         do
         {
             last = downloadCount.get();
             try
             {
-                TimeUnit.SECONDS.sleep(60);
+                TimeUnit.SECONDS.sleep(sleepTime);
             }
             catch (InterruptedException e)
             {
                 log.error("sleep fail: ",e);
                 Thread.currentThread().interrupt();
             }
-        }while (!taskMap.isEmpty() && last < downloadCount.get());
+            currentWaitTime += sleepTime;
+            if (currentWaitTime > waitTime)
+            {
+                currentWaitTime  = 0;
+            }
+        }while (notifyVerify(last,currentWaitTime,waitTime));
+    }
+
+    public boolean notifyVerify(int last,int currentTime, int waitTime)
+    {
+        if (taskMap.isEmpty())
+        {
+            return false;
+        }
+        if (currentTime >= waitTime)
+        {
+            return last < downloadCount.get();
+        }
+        return true;
     }
 
     public void retryTaskIfNeed()
@@ -225,19 +242,6 @@ public class M3u8Download {
         catch (Exception e)
         {
             log.error("merge ts file fail: ",e);
-        }
-    }
-
-    public void deleteDir(String dir)
-    {
-        Path path = FileSystems.getDefault().getPath(dir);
-        try
-        {
-            Files.delete(path);
-        }
-        catch (IOException e)
-        {
-            log.error("file delete fail:", e);
         }
     }
 

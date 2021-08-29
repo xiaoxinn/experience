@@ -22,8 +22,8 @@ public class DownloadThreadPool {
 
     static {
         threadPoolExecutor = new ThreadPoolExecutor(
-                12,
-                12,
+                30,
+                30,
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
                 Executors.defaultThreadFactory(),
