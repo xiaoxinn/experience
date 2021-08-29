@@ -8,6 +8,7 @@ import com.xiaoxin.experience.tree.Device;
 import com.xiaoxin.experience.tree.Group;
 import com.xiaoxin.experience.tree.GroupTree;
 import com.xiaoxin.experience.tree.JsTree;
+import com.xiaoxin.experience.util.DownloadUtil;
 import com.xiaoxin.experience.util.IOUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,6 +82,12 @@ public class ExperienceApplicationTests {
         String url  = "http://114.116.223.94:10010/api/system/version";
         String s = httpsService.postJson(url, "{}");
         System.out.println(s);
+    }
+
+    @Test
+    public void down()
+    {
+        DownloadUtil.downLoadFromUrl("https://video.hcyunshang.cn/20210701/W2gyHGfP/index.m3u8","index.txt","");
     }
 
     @Test

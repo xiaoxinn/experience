@@ -1,0 +1,5 @@
+#EXTM3U
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1000000,RESOLUTION=1280x960
+https://video.hcyunshang.cn/20210701/W2gyHGfP/index.m3u8
+/20210701/W2gyHGfP/1000kb/hls/index.m3u8
+https://video.hcyunshang.cn/20210701/W2gyHGfP/1000kb/hls/index.m3u8
